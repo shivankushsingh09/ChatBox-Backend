@@ -1,7 +1,7 @@
-const User = require("../models/userModel");
-const bcrypt = require("bcrypt");
+import User from "../models/userModel.js";
+import bcrypt from "bcrypt";
 
-module.exports.login = async (req, res, next) => {
+export const login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
@@ -10,14 +10,14 @@ module.exports.login = async (req, res, next) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid)
       return res.json({ msg: "Incorrect Username or Password", status: false });
-    delete user.password;
+    user.password = undefined;
     return res.json({ status: true, user });
   } catch (ex) {
     next(ex);
   }
 };
 
-module.exports.register = async (req, res, next) => {
+export const register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
     const usernameCheck = await User.findOne({ username });
@@ -32,14 +32,14 @@ module.exports.register = async (req, res, next) => {
       username,
       password: hashedPassword,
     });
-    delete user.password;
+    user.password = undefined;
     return res.json({ status: true, user });
   } catch (ex) {
     next(ex);
   }
 };
 
-module.exports.getAllUsers = async (req, res, next) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find({ _id: { $ne: req.params.id } }).select([
       "email",
@@ -53,7 +53,7 @@ module.exports.getAllUsers = async (req, res, next) => {
   }
 };
 
-module.exports.setAvatar = async (req, res, next) => {
+export const setAvatar = async (req, res, next) => {
   try {
     const userId = req.params.id;
     const avatarImage = req.body.image;
@@ -74,10 +74,10 @@ module.exports.setAvatar = async (req, res, next) => {
   }
 };
 
-module.exports.logOut = (req, res, next) => {
+export const logOut = (req, res, next) => {
   try {
     if (!req.params.id) return res.json({ msg: "User id is required " });
-    onlineUsers.delete(req.params.id);
+    global.onlineUsers.delete(req.params.id);
     return res.status(200).send();
   } catch (ex) {
     next(ex);

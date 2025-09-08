@@ -1,11 +1,14 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const authRoutes = require("./routes/auth");
-const messageRoutes = require("./routes/messages");
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+import authRoutes from "./routes/auth.js";
+import messageRoutes from "./routes/messages.js";
+import { Server } from "socket.io";
+import dotenv from "dotenv";
+
+dotenv.config();
+
 const app = express();
-const socket = require("socket.io");
-require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
@@ -15,14 +18,13 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000,
-    autoIndex: false, // Don't build indexes
-    maxPoolSize: 10, // Maintain up to 10 socket connections
-    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    autoIndex: false,
+    maxPoolSize: 10,
+    socketTimeoutMS: 45000,
     family: 4,
   })
   .then(() => {
-    console.log("DB Connetion Successfull");
+    console.log("DB Connection Successful");
   })
   .catch((err) => {
     console.log(err.message);
@@ -38,7 +40,8 @@ app.use("/api/messages", messageRoutes);
 const server = app.listen(process.env.PORT, () =>
   console.log(`Server started on ${process.env.PORT}`)
 );
-const io = socket(server, {
+
+const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
     credentials: true,
@@ -46,6 +49,7 @@ const io = socket(server, {
 });
 
 global.onlineUsers = new Map();
+
 io.on("connection", (socket) => {
   global.chatSocket = socket;
   socket.on("add-user", (userId) => {
